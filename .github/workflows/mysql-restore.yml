@@ -1,4 +1,4 @@
-name: Restauración desde respaldo manual
+name: Restauración desde respaldo .zip
 
 on:
   workflow_dispatch:
@@ -20,8 +20,10 @@ jobs:
     - name: Checkout del repositorio
       uses: actions/checkout@v3
 
-    - name: Instalar cliente de MySQL
-      run: sudo apt-get update && sudo apt-get install -y mysql-client
+    - name: Instalar unzip y cliente MySQL
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y unzip mysql-client
 
     - name: Esperar a que MySQL esté listo
       run: |
@@ -34,11 +36,11 @@ jobs:
           sleep 2
         done
 
-    - name: Descomprimir respaldo
-      run: tar -xzf backup/escolar_backup.tar.gz -C backup
+    - name: Descomprimir respaldo ZIP
+      run: unzip -o backup/escolar_backup.zip -d backup
 
     - name: Restaurar base de datos
       run: mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < backup/escolar_backup.sql
 
-    - name: Verificar datos restaurados
+    - name: Verificar restauración
       run: mysql -h 127.0.0.1 -P 3306 -uroot -padmin -e "SELECT * FROM mydatabase.prueba;"
