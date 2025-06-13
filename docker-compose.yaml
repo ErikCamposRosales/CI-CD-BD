@@ -12,7 +12,7 @@ services:
       MYSQL_USER: replication_user
       MYSQL_PASSWORD: admin
     ports:
-      "3010:3306"
+      "3306:3306"
   volumes:
     ./estructura.sql:/docker-entrypoint-initdb.d/estructura.sql,
 
