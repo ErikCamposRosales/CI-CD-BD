@@ -1,0 +1,42 @@
+name: Migración base de datos
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: mydatabase
+        ports:
+          - 3306:3306
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Instalar cliente MySQL
+      run: sudo apt-get update && sudo apt-get install -y mysql-client
+
+    - name: Esperar a MySQL listo
+      run: |
+        for i in {1..30}; do
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then
+            echo "MySQL listo"
+            break
+          fi
+          echo "Esperando MySQL..."
+          sleep 2
+        done
+
+    - name: Aplicar migraciones SQL en orden
+      run: |
+        for file in migrations/*.sql; do
+          echo "Aplicando migración: $file"
+          mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < "$file"
+        done

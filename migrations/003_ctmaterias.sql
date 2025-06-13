@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS Materias (
+    idMateria INT AUTO_INCREMENT PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Descripcion TEXT
+);

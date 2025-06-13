@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS Profesores (
+    idProfesor INT AUTO_INCREMENT PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Apellido VARCHAR(100) NOT NULL,
+    Email VARCHAR(150),
+    Telefono VARCHAR(20)
+);
