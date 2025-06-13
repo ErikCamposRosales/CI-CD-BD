@@ -26,8 +26,8 @@ jobs:
           if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then break; fi
           sleep 2
         done
-s
-   - name: Descargar backup (artifact)
+
+    - name: Descargar backup (artifact)
       uses: actions/download-artifact@v4
       with:
         name: respaldo-escolar
