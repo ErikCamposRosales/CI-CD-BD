@@ -1,0 +1,24 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.GCP_HOST }}
+        username: ${{ secrets.GCP_USER }}
+        key: ${{ secrets.GCP_SSH_KEY }}
+        script: |
+          cd /home/${{ secrets.GCP_USER }}/proyecto
+          git pull origin main
+          mysql -u root -p admin< estructura.sql
