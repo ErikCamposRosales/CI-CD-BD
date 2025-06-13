@@ -1,38 +1,48 @@
-# .github/workflows/backup.yml
-name: Respaldo de base de datos
+name: Respaldo y envío a contenedor real
 
 on:
   workflow_dispatch:
 
 jobs:
-  backup:
+  backup_and_send:
     runs-on: ubuntu-latest
 
-    steps:
-    - name: Instalar cliente MySQL
-      run: sudo apt-get update && sudo apt-get install -y mysql-client
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: mydatabase
+        ports:
+          - 3306:3306
 
-    - name: Esperar conexión a MySQL en el puerto 3010
+    steps:
+    - name: Instalar MySQL Client y SSH
+      run: sudo apt-get update && sudo apt-get install -y mysql-client openssh-client
+
+    - name: Esperar MySQL
       run: |
         for i in {1..30}; do
-          if mysqladmin ping -h 127.0.0.1 -P 3010 -uroot -padmin --silent; then
-            echo "MySQL está listo"
-            break
-          fi
-          echo "Esperando MySQL..."
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then break; fi
           sleep 2
         done
 
-    - name: Crear carpeta y realizar respaldo
+    - name: Crear tabla ejemplo y poblarla
+      run: |
+        echo "CREATE TABLE IF NOT EXISTS prueba (id INT PRIMARY KEY, nombre VARCHAR(50)); INSERT IGNORE INTO prueba VALUES (1, 'Erik');" > escolar.sql
+        mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < escolar.sql
+
+    - name: Generar respaldo
       run: |
         mkdir -p backup
-        mysqldump -h 127.0.0.1 -P 3010 -uroot -padmin mydatabase > backup/escolar_backup.sql
+        mysqldump -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase > backup/escolar_backup.sql
 
-    - name: Comprimir respaldo
-      run: tar -czf escolar_backup.tar.gz -C backup escolar_backup.sql
-
-    - name: Subir archivo como artifact
-      uses: actions/upload-artifact@v4
+    - name: Enviar respaldo a tu máquina local (contenedor real)
+      uses: appleboy/scp-action@v0.1.4
       with:
-        name: respaldo-escolar
-        path: escolar_backup.tar.gz
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        source: "backup/escolar_backup.sql"
+        target: "/home/${{ secrets.SSH_USERNAME }}/"
