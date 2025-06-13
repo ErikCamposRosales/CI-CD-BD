@@ -1,4 +1,4 @@
-name: Restauración desde respaldo .zip
+name: Restauración desde respaldo ZIP
 
 on:
   workflow_dispatch:
@@ -36,8 +36,8 @@ jobs:
           sleep 2
         done
 
-    - name: Descomprimir respaldo ZIP
-      run: unzip -o backup/escolar_backup.zip -d backup
+    - name: Descomprimir respaldo
+      run: unzip -o backup/respaldo-escolar.zip -d backup
 
     - name: Restaurar base de datos
       run: mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < backup/escolar_backup.sql
