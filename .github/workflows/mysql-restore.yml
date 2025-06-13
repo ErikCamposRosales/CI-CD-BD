@@ -1,4 +1,4 @@
-name: Restaurar base de datos desde backup
+name: Restauración de base de datos
 
 on:
   workflow_dispatch:
@@ -17,27 +17,28 @@ jobs:
           - 3306:3306
 
     steps:
-    - name: Descargar artefacto del respaldo
-      uses: actions/download-artifact@v4
-      with:
-        name: respaldo-escolar
-        path: restore/
-
     - name: Instalar cliente MySQL
-      run: |
-        sudo apt-get update && sudo apt-get install -y mysql-client
+      run: sudo apt-get update && sudo apt-get install -y mysql-client
 
-    - name: Esperar a que MySQL esté listo
+    - name: Esperar MySQL
       run: |
         for i in {1..30}; do
-          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then
-            echo "MySQL listo"
-            break
-          fi
-          echo "Esperando MySQL..."
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then break; fi
           sleep 2
         done
 
-    - name: Restaurar respaldo en MySQL
-      run: |
-        mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < restore/escolar_backup.sql
+    - name: Descargar backup (artifact)
+      uses: actions/download-artifact@v4
+      with:
+        name: respaldo-escolar
+        path: backup
+
+    - name: Descomprimir backup
+      run: tar -xzf backup/escolar_backup.tar.gz -C backup
+
+    - name: Restaurar base de datos
+      run: mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < backup/escolar_backup.sql
+
+    - name: Verificar restauración
+      run: mysql -h 127.0.0.1 -P 3306 -uroot -padmin -e "SELECT * FROM mydatabase.prueba;"
+

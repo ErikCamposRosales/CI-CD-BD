@@ -1,10 +1,10 @@
-name: Prueba completa de backup y restauración
+name: Respaldo de base de datos
 
 on:
   workflow_dispatch:
 
 jobs:
-  backup_restore:
+  backup:
     runs-on: ubuntu-latest
 
     services:
@@ -17,26 +17,19 @@ jobs:
           - 3306:3306
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
     - name: Instalar cliente MySQL
       run: sudo apt-get update && sudo apt-get install -y mysql-client
 
-    - name: Esperar a que MySQL esté listo
+    - name: Esperar MySQL
       run: |
         for i in {1..30}; do
-          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then
-            echo "MySQL está listo"
-            break
-          fi
-          echo "Esperando..."
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then break; fi
           sleep 2
         done
 
-    - name: Crear tabla de prueba
+    - name: Crear datos de ejemplo (opcional)
       run: |
-        echo "CREATE TABLE prueba (id INT PRIMARY KEY, nombre VARCHAR(50)); INSERT INTO prueba VALUES (1, 'Erik');" > escolar.sql
+        echo "CREATE TABLE IF NOT EXISTS prueba (id INT PRIMARY KEY, nombre VARCHAR(50)); INSERT IGNORE INTO prueba VALUES (1, 'Erik');" > escolar.sql
         mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < escolar.sql
 
     - name: Realizar respaldo
@@ -44,15 +37,11 @@ jobs:
         mkdir -p backup
         mysqldump -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase > backup/escolar_backup.sql
 
-    - name: Eliminar tabla para simular restauración
-      run: |
-        echo "DROP TABLE prueba;" | mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase
+    - name: Comprimir respaldo
+      run: tar -czf backup/escolar_backup.tar.gz -C backup escolar_backup.sql
 
-    - name: Restaurar desde respaldo
-      run: |
-        mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < backup/escolar_backup.sql
-
-    - name: Comprobar restauración
-      run: |
-        mysql -h 127.0.0.1 -P 3306 -uroot -padmin -e "SELECT * FROM mydatabase.prueba;"
-
+    - name: Subir artifact del respaldo
+      uses: actions/upload-artifact@v4
+      with:
+        name: respaldo-escolar
+        path: backup/escolar_backup.tar.gz
