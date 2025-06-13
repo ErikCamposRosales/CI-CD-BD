@@ -1,12 +1,10 @@
-name: Backup MySQL Escolar
+name: Prueba completa de backup y restauración
 
 on:
-  schedule:
-    - cron: '0 3 * * *' # Todos los días a las 3 AM UTC
-  workflow_dispatch:      # Permite ejecutarlo manualmente desde GitHub
+  workflow_dispatch:
 
 jobs:
-  backup:
+  backup_restore:
     runs-on: ubuntu-latest
 
     services:
@@ -17,29 +15,44 @@ jobs:
           MYSQL_DATABASE: mydatabase
         ports:
           - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
 
     steps:
-    - name: Checkout repositorio
+    - name: Checkout
       uses: actions/checkout@v3
 
     - name: Instalar cliente MySQL
       run: sudo apt-get update && sudo apt-get install -y mysql-client
 
-    - name: Esperar base de datos
-      run: sleep 20
+    - name: Esperar a que MySQL esté listo
+      run: |
+        for i in {1..30}; do
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then
+            echo "MySQL está listo"
+            break
+          fi
+          echo "Esperando..."
+          sleep 2
+        done
 
-    - name: Crear respaldo escolar.sql
+    - name: Crear tabla de prueba
+      run: |
+        echo "CREATE TABLE prueba (id INT PRIMARY KEY, nombre VARCHAR(50)); INSERT INTO prueba VALUES (1, 'Erik');" > escolar.sql
+        mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < escolar.sql
+
+    - name: Realizar respaldo
       run: |
         mkdir -p backup
         mysqldump -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase > backup/escolar_backup.sql
 
-    - name: Guardar respaldo como artefacto
-      uses: actions/upload-artifact@v4
-      with:
-        name: respaldo-escolar
-        path: backup/escolar_backup.sql
+    - name: Eliminar tabla para simular restauración
+      run: |
+        echo "DROP TABLE prueba;" | mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase
+
+    - name: Restaurar desde respaldo
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < backup/escolar_backup.sql
+
+    - name: Comprobar restauración
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -uroot -padmin -e "SELECT * FROM mydatabase.prueba;"
+
