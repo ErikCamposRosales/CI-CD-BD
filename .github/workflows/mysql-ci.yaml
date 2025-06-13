@@ -1,0 +1,24 @@
+name: CI/CD MySQL escolar (puerto 3010)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout del repositorio
+      uses: actions/checkout@v3
+
+    - name: Instalar cliente MySQL
+      run: |
+        sudo apt-get update && sudo apt-get install -y mysql-client
+
+    - name: Esperar que el contenedor mysql-master esté listo
+      run: sleep 20
+
+    - name: Aplicar script escolar.sql al contenedor en puerto 3010
+      run: |
+        mysql -h 127.0.0.1 -P 3010 -uroot -padmin < db/escolar.sql
