@@ -36,7 +36,7 @@ jobs:
 
     - name: Aplicar migraciones SQL en orden
       run: |
-        for file in migrations/*.sql; do
+       for file in migrations/*.sql; do
           echo "Aplicando migración: $file"
           mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < "$file"
-        done
+       done
