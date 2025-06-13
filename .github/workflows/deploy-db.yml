@@ -36,6 +36,3 @@ jobs:
             bash scripts/replicate.sh
 
             echo " CI/CD completado."
-
-
-
