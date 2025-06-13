@@ -23,7 +23,11 @@ jobs:
     - name: Esperar MySQL
       run: |
         for i in {1..30}; do
-          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then break; fi
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then
+            echo "MySQL está listo"
+            break
+          fi
+          echo "Esperando MySQL..."
           sleep 2
         done
 
@@ -33,12 +37,17 @@ jobs:
         name: respaldo-escolar
         path: backup
 
-    - name: Descomprimir backup
+    # --- Elimina el paso de descompresión si no estás comprimiendo el backup ---
+    # Si subiste el backup como .sql sin comprimir, elimina o comenta este paso:
+    - name: Descomprimir backup (si usas .tar.gz)
+      if: false  # deshabilitado por defecto, cambia a true si usas compresión
       run: tar -xzf backup/escolar_backup.tar.gz -C backup
 
     - name: Restaurar base de datos
-      run: mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < backup/escolar_backup.sql
+      run: |
+        # Ajusta el archivo según cómo se llame el backup descargado
+        mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < backup/escolar_backup.sql
 
     - name: Verificar restauración
-      run: mysql -h 127.0.0.1 -P 3306 -uroot -padmin -e "SELECT * FROM mydatabase.prueba;"
-
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -uroot -padmin -e "SELECT * FROM prueba;" mydatabase
