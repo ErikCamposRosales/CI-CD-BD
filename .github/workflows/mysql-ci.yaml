@@ -1,4 +1,4 @@
-name: CI/CD MySQL escolar (puerto 3010)
+name: CI/CD MySQL escolar (puerto 3306)
 
 on:
   push:
@@ -21,4 +21,4 @@ jobs:
 
     - name: Aplicar script escolar.sql al contenedor en puerto 3010
       run: |
-        mysql -h 127.0.0.1 -P 3010 -uroot -padmin < db/escolar.sql
+        mysql -h 127.0.0.1 -P 3306 -uroot -padmin < db/escolar.sql
