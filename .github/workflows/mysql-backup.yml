@@ -27,21 +27,18 @@ jobs:
           sleep 2
         done
 
-    - name: Crear datos de ejemplo (opcional)
+    - name: Crear datos de ejemplo
       run: |
         echo "CREATE TABLE IF NOT EXISTS prueba (id INT PRIMARY KEY, nombre VARCHAR(50)); INSERT IGNORE INTO prueba VALUES (1, 'Erik');" > escolar.sql
         mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < escolar.sql
 
-    - name: Realizar respaldo
+    - name: Hacer respaldo SQL
       run: |
         mkdir -p backup
         mysqldump -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase > backup/escolar_backup.sql
 
-    - name: Comprimir respaldo
-      run: tar -czf backup/escolar_backup.tar.gz -C backup escolar_backup.sql
-
-    - name: Subir artifact del respaldo
-      uses: actions/upload-artifact@v4
+    - name: Subir como artifact
+      uses: actions/upload-artifact@v3
       with:
         name: respaldo-escolar
-        path: backup/escolar_backup.tar.gz
+        path: backup/escolar_backup.sql

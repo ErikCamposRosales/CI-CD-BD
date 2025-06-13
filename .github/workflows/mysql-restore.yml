@@ -1,4 +1,4 @@
-name: Restauración desde respaldo ZIP
+name: Restaurar base de datos desde respaldo SQL
 
 on:
   workflow_dispatch:
@@ -17,29 +17,28 @@ jobs:
           - 3306:3306
 
     steps:
-    - name: Checkout del repositorio
-      uses: actions/checkout@v3
+      - name: Checkout del repositorio
+        uses: actions/checkout@v3
 
-    - name: Instalar unzip y cliente MySQL
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y unzip mysql-client
+      - name: Instalar cliente MySQL
+        run: sudo apt-get update && sudo apt-get install -y mysql-client
 
-    - name: Esperar a que MySQL esté listo
-      run: |
-        for i in {1..30}; do
-          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then
-            echo "MySQL está listo"
-            break
-          fi
-          echo "Esperando..."
-          sleep 2
-        done
+      - name: Esperar a que MySQL esté listo
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then
+              echo "MySQL está listo"
+              break
+            fi
+            echo "Esperando a MySQL..."
+            sleep 2
+          done
 
-    - name: Descomprimir respaldo
-      run: unzip -o backup/respaldo-escolar.zip -d backup
+      - name: Restaurar base de datos desde archivo escolar_backup.sql
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < db/escolar_backup.sql
 
-    - name: Restaurar base de datos
-      run: mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < backup/escolar_backup.sql
-
+      - name: Verificar restauración
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -uroot -padmin -e "SELECT * FROM mydatabase.prueba;"
 
