@@ -10,10 +10,10 @@ jobs:
 
     steps:
     
-      name: Checkout repo
+    - name: Checkout repo
       uses: actions/checkout@v3,
 
-      name: Deploy via SSH
+    - name: Deploy via SSH
       uses: appleboy/ssh-action@v0.1.10
       with:
         host: ${{ secrets.GCP_HOST }}
