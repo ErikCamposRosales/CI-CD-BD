@@ -38,7 +38,7 @@ jobs:
         mysqldump -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase > backup/escolar_backup.sql
 
     - name: Subir como artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: respaldo-escolar
         path: backup/escolar_backup.sql
