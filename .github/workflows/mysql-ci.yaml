@@ -8,6 +8,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: mydatabase
+        ports:
+          - 3306:3306
+
     steps:
     - name: Checkout del repositorio
       uses: actions/checkout@v3
@@ -16,9 +25,17 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install -y mysql-client
 
-    - name: Esperar que el contenedor mysql-master esté listo
-      run: sleep 20
-
-    - name: Aplicar script escolar.sql al contenedor en puerto 3010
+    - name: Esperar a que MySQL esté listo
       run: |
-        mysql -h 127.0.0.1 -P 3306 -uroot -padmin < db/escolar.sql
+        for i in {1..30}; do
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -padmin --silent; then
+            echo "MySQL listo"
+            break
+          fi
+          echo "Esperando MySQL..."
+          sleep 2
+        done
+
+    - name: Aplicar script escolar.sql
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -uroot -padmin mydatabase < db/escolar.sql
